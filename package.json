@@ -1,0 +1,41 @@
+{
+  "name": "engineering-mcp",
+  "version": "0.1.0",
+  "description": "Engineering MCP — work, QA evidence, time, investigation, knowledge and reporting in one local operating system.",
+  "type": "module",
+  "main": "src/server.js",
+  "bin": {
+    "engineering-mcp": "src/server.js"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wesley-Gomes93/engineering-mcp.git"
+  },
+  "homepage": "https://github.com/Wesley-Gomes93/engineering-mcp#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "zod": "^3.25.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "engineering",
+    "qa",
+    "jira",
+    "time-tracking",
+    "investigation",
+    "knowledge"
+  ],
+  "author": "Wesley Gomes",
+  "license": "MIT"
+}
