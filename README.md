@@ -17,7 +17,7 @@ Node **22+**. Cole no `~/.cursor/mcp.json` e recarregue os MCPs:
   "mcpServers": {
     "engineering": {
       "command": "npx",
-      "args": ["-y", "engineering-mcp"]
+      "args": ["-y", "engineering-mcp@latest"]
     }
   }
 }
@@ -54,7 +54,7 @@ Não substitui o que você já tem.
 
 **Fronteiras (não misturar):** lab-agent executa a suite; oracle puxa CI/Jira da empresa; mockserver/core-mcp/GitLab/Sonar continuam nos respectivos MCPs. Aqui entra o que *aconteceu neste ciclo* — depois do fato. `external_key` é ponte, não espelho do Jira.
 
-Se o `eng_route` só responder “domínio QA, use qa_record_run”, você está no pacote npm antigo. Neste repo `eng_route` **grava**: cria ticket, anexa evidência, fecha RCA. Use `npx` da versão publicada depois do publish, ou o bin local (`npm install -g .`).
+Se o `eng_route` só responder “domínio QA, use qa_record_run”, o `npx` está na versão antiga. Recarregue o MCP; `engineering-mcp@latest` puxa o **0.2.0** do npm. Não clone o repo para usar.
 
 Pacote: [npmjs.com/package/engineering-mcp](https://www.npmjs.com/package/engineering-mcp) · código: [github.com/Wesley-Gomes93/engineering-mcp](https://github.com/Wesley-Gomes93/engineering-mcp)
 

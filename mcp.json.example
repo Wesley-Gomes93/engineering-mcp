@@ -2,7 +2,7 @@
   "mcpServers": {
     "engineering": {
       "command": "npx",
-      "args": ["-y", "engineering-mcp"]
+      "args": ["-y", "engineering-mcp@latest"]
     }
   }
 }
