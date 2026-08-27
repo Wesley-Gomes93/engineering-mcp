@@ -1,14 +1,16 @@
 {
   "name": "engineering-mcp",
-  "version": "0.1.0",
-  "description": "Engineering MCP — work, QA evidence, time, investigation, knowledge and reporting in one local operating system.",
+  "version": "0.2.0",
+  "description": "Local engineering memory for Cursor — tickets, evidence, time, RCA and daily, from a sentence. No cloud.",
   "type": "module",
   "main": "src/server.js",
   "bin": {
     "engineering-mcp": "src/server.js"
   },
   "files": [
-    "src"
+    "src",
+    "VISION.md",
+    "mcp.json.example"
   ],
   "scripts": {
     "start": "node src/server.js",

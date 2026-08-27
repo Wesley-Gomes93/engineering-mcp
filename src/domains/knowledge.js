@@ -7,7 +7,7 @@ export const tools = [
     name: "knowledge_save",
     title: "Salvar conhecimento",
     description:
-      "KNOWLEDGE: grava playbook, lição ou padrão a partir de uma investigação. Memória local (FTS).",
+      "KNOWLEDGE: grava playbook, lição ou padrão. Busca FTS no SQLite local.",
     schema: z.object({
       title: z.string(),
       body: z.string(),
@@ -17,20 +17,21 @@ export const tools = [
       ticket_id: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const item = store.saveKnowledge(args);
+      const item = await store.saveKnowledge(args);
       return ok({ knowledge: item }, `${item.id} [${item.kind}] ${item.title}`);
     }),
   },
   {
     name: "knowledge_search",
     title: "Buscar conhecimento",
-    description: "KNOWLEDGE: busca playbooks/lições por texto. Use antes de reabrir bug parecido.",
+    description:
+      "KNOWLEDGE: busca playbooks/lições ranqueada por uso. Use antes de reabrir um caso parecido.",
     schema: z.object({
-      query: z.string().optional().describe("Texto livre. Vazio = mais recentes."),
+      query: z.string().optional().describe("Texto livre. Vazio = mais usados."),
       limit: z.number().optional(),
     }),
     handler: wrap(async (args) => {
-      const items = store.searchKnowledge(args);
+      const items = await store.searchKnowledge(args);
       return ok(
         { items },
         items.length

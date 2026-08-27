@@ -30,7 +30,7 @@ export const tools = [
       hypothesis: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const investigation = store.openInvestigation(args);
+      const investigation = await store.openInvestigation(args);
       return ok({ investigation }, formatInvestigation(investigation));
     }),
   },
@@ -44,7 +44,7 @@ export const tools = [
       body: z.string(),
     }),
     handler: wrap(async (args) => {
-      const finding = store.addFinding(args);
+      const finding = await store.addFinding(args);
       return ok({ finding }, `${finding.id} [${finding.kind}] ${finding.body}`);
     }),
   },
@@ -60,7 +60,7 @@ export const tools = [
       hypothesis: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const investigation = store.concludeInvestigation(args);
+      const investigation = await store.concludeInvestigation(args);
       return ok({ investigation }, formatInvestigation(investigation));
     }),
   },
@@ -73,7 +73,7 @@ export const tools = [
       status: z.enum(["open", "concluded"]).optional(),
     }),
     handler: wrap(async (args) => {
-      const investigations = store.listInvestigations(args);
+      const investigations = await store.listInvestigations(args);
       return ok(
         { investigations },
         investigations.length

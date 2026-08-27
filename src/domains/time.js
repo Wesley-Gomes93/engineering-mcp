@@ -5,14 +5,14 @@ import * as store from "../lib/store.js";
 function formatMetrics(metrics) {
   return lines([
     metrics.project ? `Projeto: ${metrics.project.name}` : "Escopo: todos os tickets",
-    `Estimado: ${metrics.estimated}h  |  Real: ${metrics.actual}h  |  Restante: ${metrics.remaining}h`,
+    `Estimado: ${metrics.estimated}h  |  Real: ${metrics.actual}h  |  Variância: ${metrics.variance}h  |  Restante: ${metrics.remaining}h`,
     metrics.accuracy != null ? `Acurácia (real/estimado): ${metrics.accuracy}` : "Sem estimativas ainda",
     bullet(
       metrics.tickets
         .filter((t) => t.estimated || t.actual)
         .map(
           (t) =>
-            `${t.ticket_id} [${t.status}] est ${t.estimated}h / real ${t.actual}h${t.overrun ? " OVER" : ""}`
+            `${t.ticket_id} [${t.status}] est ${t.estimated}h / real ${t.actual}h (Δ ${t.variance}h)${t.overrun ? " OVER" : ""}`
         ),
       "- (sem tempo lançado)"
     ),
@@ -30,7 +30,7 @@ export const tools = [
       note: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const estimate = store.setEstimate(args);
+      const estimate = await store.setEstimate(args);
       return ok({ estimate }, `${estimate.ticket_id}: ${estimate.hours}h estimadas`);
     }),
   },
@@ -46,7 +46,7 @@ export const tools = [
       logged_at: z.string().optional().describe("ISO-8601. Default: agora."),
     }),
     handler: wrap(async (args) => {
-      const log = store.logTime(args);
+      const log = await store.logTime(args);
       return ok({ log }, `${log.id}: +${log.hours}h em ${log.ticket_id || log.task_id || "geral"}`);
     }),
   },
@@ -60,7 +60,7 @@ export const tools = [
       project_key: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const metrics = store.timeMetrics(args);
+      const metrics = await store.timeMetrics(args);
       return ok({ metrics }, formatMetrics(metrics));
     }),
   },

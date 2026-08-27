@@ -1,61 +1,16 @@
 # Engineering MCP
 
-MCP local de **engenharia**: tickets, evidência de QA e tempo entram; investigação fecha causa raiz; conhecimento fica; reporting sai pronto.
+Memória local do seu trabalho de engenharia no Cursor. Você fala o que está fazendo. O MCP grava, recupera e sugere o próximo passo. O Cursor pensa; este processo lembra. Nada sai da sua máquina.
 
-Não substitui o que você já tem:
+Não precisa de Jira, de ID pronto, nem de saber o catálogo de tools.
 
-| MCP | Papel |
-|-----|--------|
-| **engineering-mcp** (este) | OS de engenharia — work + evidência + tempo + RCA + memória + relatório |
-| `qa-lab-agent` | Executa testes, gera spec, autocorrige |
-| `qa-oracle` | Logs CI / LambdaTest / Jira histórico |
-
-```text
-ENGINEERING MCP
-      │
-      ├── WORK        tickets · tasks · projects
-      ├── QA          testing evidence · bugs · artifacts
-      └── TIME        tracking · estimates · metrics
-              │
-              ▼
-        INVESTIGATION
-              │
-              ▼
-          KNOWLEDGE
-              │
-              ▼
-          REPORTING
-```
+Visão: [VISION.md](VISION.md).
 
 ---
 
-## Problema que resolve
+## Começar (2 minutos)
 
-Um ticket no Jira, um fail no CI e um apontamento de hora vivem em três lugares. Na hora do status, ninguém monta o pacote.
-
-Este MCP grava o ciclo **no mesmo banco local**:
-
-1. Abre o ticket (WORK)
-2. Anexa o fail / bug / screenshot (QA) — sem rodar a suite
-3. Lança horas e estimativa (TIME)
-4. Investiga até causa raiz (INVESTIGATION)
-5. Vira playbook (KNOWLEDGE)
-6. `report_ticket` devolve o pacote para handoff, daily ou evidência de carreira
-
----
-
-## Requisitos
-
-- Node **22+** (`node:sqlite` nativo, igual ao qa-oracle)
-- Cliente MCP (Cursor)
-
----
-
-## Instalação (sem caminho absoluto)
-
-O Cursor **não aponta para a pasta no Desktop**. Ele baixa o pacote — igual ao `qa-lab-agent`. O banco fica em `~/.engineering-mcp/engineering.db`, em qualquer máquina.
-
-### Config no Cursor (`~/.cursor/mcp.json`)
+Node **22+**. Cole no `~/.cursor/mcp.json` e recarregue os MCPs:
 
 ```json
 {
@@ -68,12 +23,66 @@ O Cursor **não aponta para a pasta no Desktop**. Ele baixa o pacote — igual a
 }
 ```
 
-Sem `args` com `/Users/...`. Sem `ENGINEERING_MCP_DB`. Recarregue os MCPs.
+No chat, peça ao agente para usar o MCP **engineering** e diga:
 
-Isso funciona depois do pacote estar no npm **ou** no GitHub (abaixo). Até publicar, use o atalho local (também sem path no `mcp.json`):
+```text
+Comecei um bug: timeout no checkout
+```
+
+Isso cria o projeto (se não houver), abre o ticket, foca nele e pede evidência. Depois, no mesmo fio:
+
+```text
+Anexa evidência 401
+Hipótese: token expirado
+40 min
+Causa raiz: cache do client, flaky
+O que aconteceu?
+Me prepara para a daily
+```
+
+Inglês também vale: `Started a bug: checkout timeout`.
+
+Banco: `~/.engineering-mcp/engineering.db`. npm leva **só o código**.
+
+Não substitui o que você já tem.
+
+| MCP | Papel |
+|-----|--------|
+| **engineering-mcp** (este) | Memória do ciclo: work, evidência, tempo, RCA, daily |
+| `qa-lab-agent` | Roda testes |
+| `qa-oracle` | CI / Jira da empresa |
+
+**Fronteiras (não misturar):** lab-agent executa a suite; oracle puxa CI/Jira da empresa; mockserver/core-mcp/GitLab/Sonar continuam nos respectivos MCPs. Aqui entra o que *aconteceu neste ciclo* — depois do fato. `external_key` é ponte, não espelho do Jira.
+
+Se o `eng_route` só responder “domínio QA, use qa_record_run”, você está no pacote npm antigo. Neste repo `eng_route` **grava**: cria ticket, anexa evidência, fecha RCA. Use `npx` da versão publicada depois do publish, ou o bin local (`npm install -g .`).
+
+Pacote: [npmjs.com/package/engineering-mcp](https://www.npmjs.com/package/engineering-mcp) · código: [github.com/Wesley-Gomes93/engineering-mcp](https://github.com/Wesley-Gomes93/engineering-mcp)
+
+---
+
+## Exemplo: falha de componente (piloto)
+
+Skills e specs dizem **como** automatizar. Este MCP registra **o que aconteceu**.
+
+```text
+Comecei um bug: TDS_CARD timeout no bottom sheet (Android)
+  → ticket + foco (CQA-n se o projeto core-qa já existir)
+
+Anexa evidência: fail no CI, suite TDS_CARDTEST.js
+Hipótese: timeout do mock com lazy load
+40 min
+Causa raiz: timeOutMsgComponents curto demais, flaky
+O que aconteceu?
+Já vimos isso?
+```
+
+A RCA vira lesson sozinha. Na próxima falha parecida, o foco sussurra o playbook — se houver sinal. `eng_context` / `eng_report` são o pacote de handoff (não um dashboard).
+
+---
+
+## Desenvolvimento local
 
 ```bash
-cd ~/Desktop/engineering-mcp
 npm install
 npm install -g .
 ```
@@ -88,99 +97,73 @@ npm install -g .
 }
 ```
 
-`npm install -g .` coloca o comando no PATH. O `mcp.json` só cita o nome.
-
----
-
-## Onde hospedar (npm vs GitHub vs nuvem)
-
-| Onde | O que vai pra nuvem | Config no Cursor |
-|------|---------------------|------------------|
-| **npm** (recomendado) | Só o código, público | `"command": "npx", "args": ["-y", "engineering-mcp"]` |
-| **GitHub** | Só o código, público | `"args": ["-y", "github:Wesley-Gomes93/engineering-mcp"]` |
-| **Servidor HTTP** | Código **e** os seus tickets | `"url": "https://seu-dominio/mcp"` |
-
-**Não precisa de site próprio.** O “site” é o [npmjs.com](https://www.npmjs.com) — o mesmo do `mcp-lab-agent`. Cursor roda o MCP **na sua máquina**; a nuvem só entrega o código.
-
-Nuvem tipo URL (`"url": "https://..."`) existe no Cursor, mas aí o SQLite deixa de ser local: tickets, bugs e horas passariam a viver num servidor. Isso é produto multi-user, não este v0.
-
-### Publicar no npm (igual o lab-agent)
-
-Nome `engineering-mcp` está livre. Com conta npm já logada:
-
-```bash
-cd ~/Desktop/engineering-mcp
-npm test
-npm publish --access public
-```
-
-Depois disso, qualquer Mac usa só o bloco `npx` acima.
-
-### Publicar no GitHub (sem npm)
-
-```bash
-cd ~/Desktop/engineering-mcp
-git init
-git add .
-git commit -m "feat: engineering mcp v0.1"
-gh repo create Wesley-Gomes93/engineering-mcp --public --source . --remote origin --push
-```
-
-Config alternativa, ainda sem path:
-
-```json
-{
-  "mcpServers": {
-    "engineering": {
-      "command": "npx",
-      "args": ["-y", "github:Wesley-Gomes93/engineering-mcp"]
-    }
-  }
-}
-```
-
-Reinicie o Cursor (ou recarregue os MCPs). O banco é criado sozinho em `~/.engineering-mcp/`.
-
 ---
 
 ## Loop típico
 
+Fale em português ou inglês. `eng_route` **executa**. Banco vazio é ok.
+
 ```text
-"Abre um projeto Atlas (ATL) e um bug P1: timeout no checkout"
-  → work_upsert_project + work_upsert_ticket
+"Comecei um bug: timeout no checkout"
+  → cria projeto + ticket + foco (ex: ENG-1)
 
-"Registra o fail do checkout.spec.js e anexa o log"
-  → qa_record_run + qa_attach_evidence
+"Comecei o APP-1"
+  → se não existir, cria o projeto APP e o ticket
 
-"Estima 4h e lança 1.5h de repro"
-  → time_estimate + time_log
+"Anexa evidência 401"
+  → run fail + evidência no ticket em foco
 
-"Abre investigação: hipótese de seletor instável"
-  → investigate_open + investigate_add_finding
+"Hipótese: seletor instável"
+  → finding (abre investigação se precisar)
 
-"Fecha como flaky: timing no botão Finalizar"
-  → investigate_conclude
+"40 min"
+  → sessão de trabalho + horas
 
-"Vira playbook: wait da animação + data-testid"
-  → knowledge_save
+"Causa raiz: timing no botão, flaky"
+  → fecha a investigação
 
-"Me dá o pacote do ticket"
-  → report_ticket
+"O que aconteceu?"
+  → história completa (work, QA, tempo, RCA, parecidos)
+
+"Já vimos isso?"
+  → tickets e playbooks semelhantes
+
+"Me prepara para a daily"
+  → resumo do dia
 ```
 
-Se não souber a tool: `eng_route` com a frase em português.
+As tools `work_*`, `qa_*`, `time_*`, `investigate_*`, `knowledge_*` e `report_*` continuam como aliases.
+
+Fails repetidos, RCA e hora acima da estimativa viram lesson/pattern sozinhos. Pattern que volta abre um ticket `Melhoria: …` no backlog.
+
+O MCP **não** é um modelo na nuvem. O Cursor pensa; este processo lembra. Ao focar um ticket, só sussurra se houver playbook, caso parecido ou um próximo passo derivado do estado. `eng_context` devolve blocos compactos (`CURRENT_STATE` … `NEXT_STEP`), com `[fact]` / `[inference]` / `[knowledge]`. Nada disso sai da máquina.
 
 ---
 
 ## Ferramentas
 
+Alto nível (use estas). Sem ticket_id, vale o foco da sessão.
+
+| Tool | Faz |
+|------|-----|
+| `eng_route` | Executa a frase em linguagem natural |
+| `eng_context` | Blocos compactos para o modelo: estado, evidência, RCA, tempo, memória, próximo passo |
+| `eng_work` | Foco, criar/atualizar, listar, board, status |
+| `eng_evidence` | Run, bug ou anexo — não executa teste |
+| `eng_investigate` | Hipótese, finding, causa raiz |
+| `eng_time` | Estimativa, horas, sessão em minutos, variância |
+| `eng_knowledge` | Playbook / busca / “já vimos isso?” |
+| `eng_report` | Pacote do ticket, daily, ou snapshot do projeto |
+
+### Aliases (mesmo banco)
+
 ### WORK
 
 | Tool | Faz |
 |------|-----|
-| `work_upsert_project` | Cria/atualiza projeto (`key` vira prefixo: ATL-1) |
+| `work_upsert_project` | Cria/atualiza projeto (`key` vira prefixo: `ATL-1`) |
 | `work_list_projects` | Lista projetos |
-| `work_upsert_ticket` | Cria/atualiza ticket (`story/bug/task/spike/epic`) |
+| `work_upsert_ticket` | Cria/atualiza (`story` / `bug` / `task` / `spike` / `epic`) |
 | `work_upsert_task` | Task filha |
 | `work_list` | Filtro por projeto, status, tipo, texto |
 | `work_board` | Kanban: backlog → todo → doing → review → done |
@@ -188,33 +171,33 @@ Se não souber a tool: `eng_route` com a frase em português.
 
 Status: `backlog` · `todo` · `doing` · `review` · `done`  
 Prioridade: `p0` … `p3`  
-`external_key` guarda a chave Jira/GitLab sem puxar API ainda.
+`external_key` / `external_source` / `external_url` guardam o gancho Jira/GitLab sem puxar API. Tags e `component` alimentam o “já vimos isso?”.
 
 ### QA
 
 | Tool | Faz |
 |------|-----|
-| `qa_record_run` | Evidência de run (`pass/fail/flaky/blocked`) |
+| `qa_record_run` | Evidência de run (`pass` / `fail` / `flaky` / `blocked`) |
 | `qa_record_bug` | Bug local + classificação |
 | `qa_attach_evidence` | log / screenshot / report / url |
-| `qa_list` | Runs + bugs + evidências do ticket |
+| `qa_list` | Runs, bugs e evidências do ticket |
 
-Executar teste continua no **qa-lab-agent**. Histórico Jira corporativo continua no **qa-oracle**.
+Rodar a suite continua no **qa-lab-agent**. Histórico Jira corporativo continua no **qa-oracle**.
 
 ### TIME
 
 | Tool | Faz |
 |------|-----|
-| `time_estimate` | Horas previstas no ticket |
+| `time_estimate` | Horas previstas |
 | `time_log` | Horas reais |
-| `time_metrics` | Estimado vs real vs restante |
+| `time_metrics` | Estimado vs real vs restante vs variância |
 
 ### INVESTIGATION
 
 | Tool | Faz |
 |------|-----|
 | `investigate_open` | Abre RCA (ticket e/ou bug) |
-| `investigate_add_finding` | observation / evidence / hypothesis / decision |
+| `investigate_add_finding` | `observation` / `evidence` / `hypothesis` / `decision` |
 | `investigate_conclude` | Causa raiz + classificação |
 | `investigate_list` | Abertas ou concluídas |
 
@@ -224,8 +207,8 @@ Classificação: `bug` · `flaky` · `infra` · `regression` · `unknown`
 
 | Tool | Faz |
 |------|-----|
-| `knowledge_save` | Playbook / lesson / pattern |
-| `knowledge_search` | Busca FTS5 ("já vimos isso?") |
+| `knowledge_save` | Playbook, lesson ou pattern |
+| `knowledge_search` | Busca no que já foi visto |
 
 ### REPORTING
 
@@ -233,47 +216,33 @@ Classificação: `bug` · `flaky` · `infra` · `regression` · `unknown`
 |------|-----|
 | `report_ticket` | Pacote completo de um ticket |
 | `report_status` | Snapshot do projeto (N dias) |
-| `eng_route` | Qual domínio usar |
 
 ---
 
-## Estrutura
+## Desenvolvimento
 
-```text
-engineering-mcp/
-├── src/
-│   ├── server.js              # MCP stdio
-│   ├── lib/store.js           # SQLite — fonte da verdade
-│   └── domains/
-│       ├── work.js
-│       ├── qa.js
-│       ├── time.js
-│       ├── investigation.js
-│       ├── knowledge.js
-│       └── reporting.js
-└── test/store.test.js
+```bash
+npm install
+npm test
+npm start
 ```
 
-Banco padrão: `~/.engineering-mcp/engineering.db` (não viaja com o repo).
+Requisito: Node 22+ (`node:sqlite`).
 
-Nada sai da máquina além do que o agente já vê no chat. Sem Jira/GitLab no v0 — `external_key` é o gancho para sync depois.
+```text
+src/
+  server.js          MCP stdio
+  lib/store.js       SQLite — fonte da verdade
+  lib/route.js       linguagem natural → ação
+  domains/           eng (alto nível) + aliases work/qa/time/…
+```
 
----
-
-## v0 vs depois
-
-**Agora:** banco local, ciclo fechado, Cursor.
-
-**Depois (só se o v0 for usado):**
-
-- Sync Jira → tickets (reusar cliente do qa-oracle)
-- Importar run do qa-lab-agent / job do GitLab
-- Dashboard HTML do `report_status`
+Banco: `~/.engineering-mcp/engineering.db` (fora do git). Override opcional: `ENGINEERING_MCP_DB`.
 
 ---
 
-## Segurança
+## Privacidade
 
-- Banco em `~/.engineering-mcp/` (fora do repo)
-- Sem tokens no v0
-- Publicar no npm/GitHub manda **código**, não tickets
+- Tickets, bugs e horas ficam no disco local
+- Sem Turso, sem sync, sem MCP por URL
+- `npm publish` / push no GitHub mandam código, não o banco

@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "pains": {},
+  "uses": {},
+  "solutions": {},
+  "classes": {},
+  "playbooks": [
+    {
+      "id": "fail-wait",
+      "when": ["fail", "flaky", "fail_streak", "timeout", "timed out", "seletor", "xpath"],
+      "hint": "Timeout/flaky: espera de I/O, lock ou animação — confirma se é cliente, rede ou servidor."
+    },
+    {
+      "id": "http-auth",
+      "when": ["401", "403", "unauthorized", "token"],
+      "hint": "401/403: token, header Authorization, relógio e ambiente (stg vs prod) antes de mudar código."
+    },
+    {
+      "id": "http-5xx",
+      "when": ["500", "502", "503", "crash", "exception", "nullpointer", "npe"],
+      "hint": "5xx/crash: pega request id e log do servidor antes de mudar UI ou teste."
+    },
+    {
+      "id": "cache-stale",
+      "when": ["cache", "stale", "ttl"],
+      "hint": "Cache: confirma invalidação, TTL e se o client guarda estado velho."
+    },
+    {
+      "id": "overrun-split",
+      "when": ["overrun", "estouro", "estimativa"],
+      "hint": "Quando o real passa o estimado, quebra o ticket e recalie a próxima faixa nesta área."
+    },
+    {
+      "id": "rca-lesson",
+      "when": ["rca", "causa raiz", "root cause"],
+      "hint": "Causa raiz vira passo reproduzível no playbook, não só o texto da hipótese."
+    }
+  ]
+}

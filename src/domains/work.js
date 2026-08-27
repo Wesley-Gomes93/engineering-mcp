@@ -8,6 +8,8 @@ function formatTicket(ticket) {
     `${ticket.id}  [${ticket.status}/${ticket.type}/${ticket.priority}]  ${ticket.title}`,
     ticket.project ? `Projeto: ${ticket.project.name} (${ticket.project.key})` : null,
     ticket.external_key ? `Externo: ${ticket.external_key}` : null,
+    ticket.tags ? `Tags: ${ticket.tags}` : null,
+    ticket.component ? `Componente: ${ticket.component}` : null,
     ticket.description ? `Desc: ${ticket.description}` : null,
     ticket.tasks?.length
       ? `Tasks:\n${bullet(ticket.tasks.map((t) => `${t.id} [${t.status}] ${t.title}`))}`
@@ -29,7 +31,7 @@ export const tools = [
       status: z.enum(["active", "archived"]).optional(),
     }),
     handler: wrap(async (args) => {
-      const project = store.upsertProject(args);
+      const project = await store.upsertProject(args);
       return ok(
         { project },
         `Projeto ${project.id} (${project.key}) — ${project.name} [${project.status}]`
@@ -39,12 +41,12 @@ export const tools = [
   {
     name: "work_list_projects",
     title: "Listar projetos",
-    description: "WORK: lista projetos locais do Engineering MCP.",
+    description: "WORK: lista projetos do Engineering MCP.",
     schema: z.object({
       status: z.enum(["active", "archived"]).optional(),
     }),
     handler: wrap(async (args) => {
-      const projects = store.listProjects(args);
+      const projects = await store.listProjects(args);
       return ok(
         { projects },
         projects.length
@@ -68,9 +70,13 @@ export const tools = [
       priority: z.enum(store.PRIORITIES).optional(),
       description: z.string().optional(),
       external_key: z.string().optional().describe("Chave Jira/GitLab opcional, ex: APP-442."),
+      external_source: z.string().optional(),
+      external_url: z.string().optional(),
+      tags: z.union([z.string(), z.array(z.string())]).optional(),
+      component: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const ticket = store.upsertTicket(args);
+      const ticket = await store.upsertTicket(args);
       return ok({ ticket }, formatTicket(ticket));
     }),
   },
@@ -85,7 +91,7 @@ export const tools = [
       status: z.enum(store.TICKET_STATUSES).optional(),
     }),
     handler: wrap(async (args) => {
-      const task = store.upsertTask(args);
+      const task = await store.upsertTask(args);
       return ok({ task }, `${task.id} [${task.status}] ${task.title} ← ${task.ticket_id}`);
     }),
   },
@@ -101,7 +107,7 @@ export const tools = [
       query: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const tickets = store.listTickets(args);
+      const tickets = await store.listTickets(args);
       return ok(
         { tickets },
         tickets.length
@@ -119,7 +125,7 @@ export const tools = [
       project_key: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const board = store.board(args);
+      const board = await store.board(args);
       const text = lines([
         board.project ? `Projeto: ${board.project.name} (${board.project.key})` : "Todos os projetos",
         `Total: ${board.total}`,
@@ -142,7 +148,7 @@ export const tools = [
       id: z.string().describe("ID do ticket, ex: ENG-3."),
     }),
     handler: wrap(async ({ id }) => {
-      const ticket = store.getTicket(id);
+      const ticket = await store.getTicket(id);
       if (!ticket) throw new Error(`ticket não encontrado: ${id}`);
       return ok({ ticket }, formatTicket(ticket));
     }),

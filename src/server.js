@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { initDatabase, getDbPath } from "./lib/store.js";
+import { initDatabase, describeDb } from "./lib/store.js";
+import { tools as eng } from "./domains/eng.js";
 import { tools as work } from "./domains/work.js";
 import { tools as qa } from "./domains/qa.js";
 import { tools as time } from "./domains/time.js";
@@ -9,11 +10,11 @@ import { tools as investigation } from "./domains/investigation.js";
 import { tools as knowledge } from "./domains/knowledge.js";
 import { tools as reporting } from "./domains/reporting.js";
 
-const TOOLS = [...work, ...qa, ...time, ...investigation, ...knowledge, ...reporting];
+const TOOLS = [...eng, ...work, ...qa, ...time, ...investigation, ...knowledge, ...reporting];
 
 const server = new McpServer({
   name: "engineering-mcp",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 
 for (const tool of TOOLS) {
@@ -29,11 +30,11 @@ for (const tool of TOOLS) {
 }
 
 async function main() {
-  initDatabase();
+  await initDatabase();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   process.stderr.write(
-    `Engineering MCP v0.1.0 — ${TOOLS.length} tools — db ${getDbPath()}\n`
+    `Engineering MCP v0.2.0 — ${TOOLS.length} tools — db ${describeDb()}\n`
   );
 }
 

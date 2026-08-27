@@ -16,7 +16,7 @@ export const tools = [
       source: z.string().optional().describe("manual, ci, qa-lab-agent, local…"),
     }),
     handler: wrap(async (args) => {
-      const run = store.recordRun(args);
+      const run = await store.recordRun(args);
       return ok({ run }, `${run.id} [${run.status}] ${run.suite || "suite"} ← ${run.ticket_id || "sem ticket"}`);
     }),
   },
@@ -34,7 +34,7 @@ export const tools = [
       description: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const bug = store.recordBug(args);
+      const bug = await store.recordBug(args);
       return ok(
         { bug },
         `${bug.id} [${bug.severity}/${bug.classification}] ${bug.title} ← ${bug.ticket_id || "sem ticket"}`
@@ -54,7 +54,7 @@ export const tools = [
       note: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const evidence = store.attachEvidence(args);
+      const evidence = await store.attachEvidence(args);
       return ok({ evidence }, `${evidence.id} [${evidence.kind}] ${evidence.path_or_url}`);
     }),
   },
@@ -66,7 +66,7 @@ export const tools = [
       ticket_id: z.string().optional(),
     }),
     handler: wrap(async (args) => {
-      const qa = store.listQa(args);
+      const qa = await store.listQa(args);
       const text = lines([
         `Runs (${qa.runs.length})`,
         bullet(qa.runs.map((r) => `${r.id} [${r.status}] ${r.suite || r.summary}`)),
