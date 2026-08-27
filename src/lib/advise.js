@@ -33,8 +33,16 @@ export function nextStep(ticket, qa, investigations, timeRow) {
   const fails = (qa?.runs || []).filter((r) => r.status === "fail" || r.status === "flaky");
   const open = (investigations || []).filter((i) => i.status === "open");
   const concluded = (investigations || []).filter((i) => i.status === "concluded");
+  const hasRun = Boolean((qa?.runs || []).length);
+  const hasEvidence = Boolean((qa?.evidence || []).length);
+  const isSpike = ticket.type === "spike";
+  const noTime = !timeRow || timeRow.actual === 0;
+  const active = ticket.status !== "done" && ticket.status !== "backlog";
 
-  if (!(qa?.runs || []).length && !(qa?.evidence || []).length) {
+  if (ticket.status === "review" && !hasRun) {
+    return "Review sem run de QA. Anexa o pass/fail antes do handoff.";
+  }
+  if (!isSpike && !hasRun && !hasEvidence) {
     return "Ainda não tem evidência. Anexa o fail, o log ou o print.";
   }
   if (fails.length && !open.length && !concluded.length) {
@@ -45,13 +53,16 @@ export function nextStep(ticket, qa, investigations, timeRow) {
     if (!findings.length) return "Investigação aberta e vazia. Adiciona hipótese ou evidência.";
     return "Investigação aberta. Fecha com causa raiz quando souber.";
   }
+  if (isSpike && noTime && active) {
+    return "Spike sem hora lançada. Ex: “40 min”.";
+  }
   if (timeRow && timeRow.estimated > 0 && timeRow.actual === 0) {
     return "Tem estimativa e zero hora. Diz quanto já gastou (ex: 40 min).";
   }
   if (timeRow?.overrun) {
     return "Real passou o estimado. Quebre o restante ou recalie a próxima faixa.";
   }
-  if (ticket.status === "doing" && (!timeRow || timeRow.actual === 0)) {
+  if (ticket.status === "doing" && noTime) {
     return "Em doing sem tempo lançado. Ex: “40 min”.";
   }
   return null;

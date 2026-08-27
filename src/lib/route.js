@@ -431,6 +431,7 @@ async function execute(parsed) {
 }
 
 export function formatDaily(report) {
+  const gaps = report.gaps || [];
   return [
     `# Daily  (${report.since.slice(0, 10)})`,
     `Horas hoje: ${report.hours}h  |  Tickets tocados: ${report.tickets.length}  |  Em doing: ${report.doing.length}`,
@@ -441,6 +442,9 @@ export function formatDaily(report) {
     report.doing.length
       ? "Em andamento:\n" + report.doing.map((t) => `- ${t.id} ${t.title}`).join("\n")
       : null,
+    gaps.length
+      ? "Fora do fluxo:\n" + gaps.map((g) => `- ${g.ticket_id} ${g.message}`).join("\n")
+      : "Fora do fluxo: nenhum.",
   ]
     .filter(Boolean)
     .join("\n");

@@ -1045,6 +1045,78 @@ export async function concludeOpenInvestigation(input = {}) {
   });
 }
 
+export async function flowGaps({ project_id, project_key } = {}) {
+  const tickets = await listTickets({ project_id, project_key });
+  const active = tickets.filter((t) => t.status !== "done" && t.status !== "backlog");
+  if (!active.length) return [];
+
+  const ids = active.map((t) => t.id);
+  const placeholders = ids.map(() => "?").join(",");
+  const runRows = await many(
+    `SELECT ticket_id, status, COUNT(*) AS n FROM qa_runs WHERE ticket_id IN (${placeholders}) GROUP BY ticket_id, status`,
+    ids
+  );
+  const invRows = await many(
+    `SELECT ticket_id, status FROM investigations WHERE ticket_id IN (${placeholders})`,
+    ids
+  );
+  const metrics = await timeMetrics({ project_id, project_key });
+  const timeBy = Object.fromEntries((metrics.tickets || []).map((row) => [row.ticket_id, row]));
+
+  const runsBy = {};
+  for (const row of runRows) {
+    if (!runsBy[row.ticket_id]) runsBy[row.ticket_id] = { total: 0, fail: 0 };
+    runsBy[row.ticket_id].total += Number(row.n);
+    if (row.status === "fail" || row.status === "flaky") runsBy[row.ticket_id].fail += Number(row.n);
+  }
+  const invBy = {};
+  for (const row of invRows) {
+    if (!invBy[row.ticket_id]) invBy[row.ticket_id] = { open: false, concluded: false };
+    if (row.status === "open") invBy[row.ticket_id].open = true;
+    if (row.status === "concluded") invBy[row.ticket_id].concluded = true;
+  }
+
+  const gaps = [];
+  for (const ticket of active) {
+    const runs = runsBy[ticket.id] || { total: 0, fail: 0 };
+    const inv = invBy[ticket.id] || { open: false, concluded: false };
+    const time = timeBy[ticket.id];
+    if (ticket.status === "review" && runs.total === 0) {
+      gaps.push({
+        ticket_id: ticket.id,
+        title: ticket.title,
+        kind: "review_without_qa",
+        message: "review sem evidência de QA",
+      });
+    }
+    if (runs.fail > 0 && !inv.open && !inv.concluded) {
+      gaps.push({
+        ticket_id: ticket.id,
+        title: ticket.title,
+        kind: "fail_without_rca",
+        message: "fail sem RCA",
+      });
+    }
+    if (time?.overrun) {
+      gaps.push({
+        ticket_id: ticket.id,
+        title: ticket.title,
+        kind: "overrun",
+        message: `overrun (${time.actual}h vs ${time.estimated}h)`,
+      });
+    }
+    if (ticket.type === "spike" && (!time || time.actual === 0)) {
+      gaps.push({
+        ticket_id: ticket.id,
+        title: ticket.title,
+        kind: "spike_without_time",
+        message: "spike sem hora lançada",
+      });
+    }
+  }
+  return gaps;
+}
+
 export async function dailyReport({ days = 1, project_id, project_key } = {}) {
   const project =
     project_id || project_key ? await findProject({ id: project_id, key: project_key || project_id }) : null;
@@ -1115,5 +1187,6 @@ export async function dailyReport({ days = 1, project_id, project_key } = {}) {
     bugs: bugs.filter(inScope),
     investigations: investigations.filter(inScope),
     open_investigations: openInvestigations,
+    gaps: await flowGaps({ project_id: project?.id, project_key: project?.key }),
   };
 }

@@ -207,6 +207,24 @@ describe("engineering-mcp store", () => {
     assert.equal(hasSignal(silent), false);
     assert.equal(formatAdvice(silent), null);
 
+    const reviewBare = await store.upsertTicket({
+      project_key: "ATL",
+      title: "Handoff sem evidencia de QA",
+      type: "task",
+      status: "review",
+    });
+    const reviewAdvice = await advise({ ticket_id: reviewBare.id, event: "focus" });
+    assert.match(reviewAdvice.next, /review sem run de QA/i);
+
+    const spikeOpen = await store.upsertTicket({
+      project_key: "ATL",
+      title: "Explorar cache Redis",
+      type: "spike",
+      status: "doing",
+    });
+    const spikeAdvice = await advise({ ticket_id: spikeOpen.id, event: "focus" });
+    assert.match(spikeAdvice.next, /spike sem hora/i);
+
     await store.focusTicket("ATL-1");
     const ctx = await store.ticketContext("ATL-1");
     const brief = formatContext(ctx, await advise({ ticket_id: "ATL-1", event: "context" }));
@@ -290,6 +308,10 @@ describe("engineering-mcp store", () => {
     assert.ok(daily.hours > 0);
     assert.ok(daily.tickets.some((t) => t.id === "ATL-1"));
     assert.ok(daily.doing.some((t) => t.id === "ATL-1"));
+    assert.ok(daily.gaps.some((g) => g.kind === "review_without_qa"));
+    assert.ok(daily.gaps.some((g) => g.kind === "fail_without_rca"));
+    assert.ok(daily.gaps.some((g) => g.kind === "overrun"));
+    assert.ok(daily.gaps.some((g) => g.kind === "spike_without_time"));
   });
 
   it("eng_route reconhece e executa o ciclo em linguagem natural", async () => {
@@ -332,6 +354,8 @@ describe("engineering-mcp store", () => {
 
     const daily = await dispatch("me prepara para a daily");
     assert.match(daily.text, /Daily/);
+    assert.match(daily.text, /Fora do fluxo/);
+    assert.match(daily.text, /fail sem RCA|review sem evidência|overrun/i);
 
     const done = await dispatch("done");
     assert.equal(done.data.ticket.status, "done");
